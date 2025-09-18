@@ -1,0 +1,1490 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulateur Mathématique RSK</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+            color: #ffffff;
+            margin: 0;
+            padding: 2vw; /* Use relative units */
+        }
+        h1 {
+            color: #00d4ff;
+            margin-bottom: 7vw; /* Use relative units */
+            font-size: 3vw; /* Use relative units */
+            text-align: center;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+        .container {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            gap: 2vw; /* Use relative units */
+            width: 100%;
+            max-width: 90vw; /* Use relative units */
+            position: relative; /* Ensure stars are not placed inside these containers */
+            z-index: 1;
+            flex-direction: row-reverse; /* Move control container to the right */
+            height: 100%; /* Adjust height */
+        }
+        canvas {
+            background: radial-gradient(circle, #005800, #003300);
+            border: 0.2vw solid #00d4ff; /* Use relative units */
+            border-radius: 1vw; /* Use relative units */
+            box-shadow: 0 0 2vw #00d4ff; /* Use relative units */
+            /* Make canvas responsive */
+            width: 70%; /* Adjust width */
+            height: 100%;
+            max-height: calc((6/12) * 80vw);
+            max-width: calc((12/6) * 100vh); /* Adjust maximum width */
+            transform-origin: center; /* Ensure scaling is centered */
+        }
+        #controls {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 2vw; /* Use relative units */
+            border-radius: 1vw; /* Use relative units */
+            box-shadow: 0 0 2vw #00d4ff; /* Use relative units */
+            height: 100%; /* Match height to canvas */
+            max-height: none; /* Remove maximum height */
+            width: 100%; /* Revert width */
+            max-width: 10vw; /* Increase maximum width */
+        }
+        #controls button {
+            margin: 0.5vw 0; /* Use relative units */
+            padding: 0.3vw 0.6vw; /* Reduce padding */
+            font-size: 1vw; /* Increase font size */
+            border: none;
+            border-radius: 0.5vw; /* Use relative units */
+            background: linear-gradient(135deg, #00d4ff, #007bff);
+            color: white;
+            cursor: pointer;
+            transition: background 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: 0 0.4vw 0.6vw rgba(0, 0, 0, 0.1); /* Use relative units */
+            width: 100%; /* Adjust button width */
+            
+        }
+        #controls button:hover {
+            background: linear-gradient(135deg, #007bff, #00d4ff);
+            transform: scale(1.1);
+            box-shadow: 0 0.6vw 0.8vw rgba(0, 0, 0, 0.2); /* Use relative units */
+        }
+        #coordinates {
+            font-size: 12px; /* Reduce font size */
+            color: #00d4ff;
+            text-align: left;
+        }
+        #ballCoordinates {
+            font-size: 12px; /* Reduce font size */
+            color: #00d4ff;
+            text-align: left;
+        }
+        #robotCoordinates {
+            font-size: 12px; /* Reduce font size */
+            color: #00d4ff;
+            text-align: left;
+        }
+        #mathFormulasButton {
+            margin: 10px 0;
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            background: linear-gradient(135deg, #00d4ff, #007bff);
+            color: white;
+            cursor: pointer;
+            transition: background 0.3s ease, transform 0.3s ease;
+        }
+        #mathFormulasButton:hover {
+            background: linear-gradient(135deg, #007bff, #00d4ff);
+            transform: scale(1.1);
+        }
+        #mathFormulasModal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.8);
+            -webkit-backdrop-filter: blur(5px);
+
+            backdrop-filter: blur(5px);
+        }
+        #mathFormulasContent {
+            background-color: rgba(255, 255, 255, 0.1);
+            margin: 10% auto;
+            padding: 20px;
+            border: 2px solid #00d4ff;
+            width: 80%;
+            max-width: 600px;
+            border-radius: 10px;
+            color: #ffffff;
+            box-shadow: 0 0 20px #00d4ff;
+        }
+        #mathFormulasContent ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        #mathFormulasContent li {
+            margin: 10px 0;
+            font-size: 1.2em;
+        }
+        #mathFormulasContent code {
+            background: rgba(0, 0, 0, 0.5);
+            padding: 5px;
+            border-radius: 5px;
+        }
+        #closeModal {
+            color: #00d4ff;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        #closeModal:hover,
+        #closeModal:focus {
+            color: #ffffff;
+            text-decoration: none;
+        }
+        a {
+            color: #00d4ff;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+        a:hover {
+            color: #007bff;
+        }
+        #outOfBoundsMessage {
+            display: none;
+            margin-top: 20px;
+            font-size: 24px;
+            font-weight: bold;
+            color: #ff0000;
+            text-align: center;
+            position: absolute;
+            bottom: 2vw;
+            left: 2vw;
+            
+            width: 62.5vw;
+            max-width: 62.5vw;
+            text-shadow: 0.104vw 0.104vw 0.208vw rgba(0, 0, 0, 0.5);
+            z-index: 10; /* Ensure message is in the foreground */
+        }
+        #goalMessage {
+            display: none;
+            font-size: 24px;
+            font-weight: bold;
+            text-align: center;
+            position: absolute;
+            bottom: 2vw;
+            left: 2vw;
+            
+            width: 100%;
+            max-width: 1200px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            z-index: 10; /* Ensure message is in the foreground */
+        }
+        #settingsButton {
+            margin: 10px 0;
+            padding: 10px 20px;
+            font-size: 0.8vw;
+            border: none;
+            border-radius: 5px;
+            background: linear-gradient(135deg, #00d4ff, #007bff);
+            color: white;
+            cursor: pointer;
+            transition: background 0.3s ease, transform 0.3s ease;
+        }
+        #settingsButton:hover {
+            background: linear-gradient(135deg, #007bff, #00d4ff);
+            transform: scale(1.1);
+        }
+        #settingsModal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+        }
+        #settingsContent {
+            background-color: rgba(255, 255, 255, 0.1);
+            margin: 10% auto;
+            padding: 20px;
+            border: 2px solid #00d4ff;
+            width: 80%;
+            max-width: 600px;
+            border-radius: 10px;
+            color: #ffffff;
+            box-shadow: 0 0 20px #00d4ff;
+        }
+        #settingsContent label {
+            display: block;
+            margin: 10px 0;
+            font-size: 1.2em;
+        }
+        #settingsContent input[type="color"],
+        #settingsContent input[type="text"] {
+            margin-left: 10px;
+        }
+        #closeSettingsModal {
+            color: #00d4ff;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        #closeSettingsModal:hover,
+        #closeSettingsModal:focus {
+            color: #ffffff;
+            text-decoration: none;
+        }
+        footer {
+            margin-top: 40px; /* Add more space above the footer */
+            text-align: center;
+            color: #ffffff;
+        }
+        .left-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 2vw; /* Use relative units */
+            border-radius: 1vw; /* Use relative units */
+            box-shadow: 0 0 2vw #00d4ff; /* Use relative units */
+            margin-right: 2vw; /* Use relative units */
+            position: relative; /* Ensure stars are not placed inside these containers */
+            z-index: 1;
+            margin-bottom: 2vw; /* Use relative units */
+            width: 30%; /* Increase width */
+            max-width: 10vw; /* Increase maximum width */
+            height: 100%; /* Match height to canvas */
+            max-height: none; /* Remove maximum height */
+        }
+        .left-container button {
+            margin: 0.5vw 0; /* Use relative units */
+            padding: 0.5vw 0.5vw; /* Use relative units */
+            font-size: 1.2vw; /* Use relative units */
+            border: none;
+            border-radius: 0.5vw; /* Use relative units */
+            background: linear-gradient(135deg, #00d4ff, #007bff); /* Ensure background is set */
+            color: white;
+            cursor: pointer;
+            transition: background 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: 0 0.4vw 0.6vw rgba(0, 0, 0, 0.1); /* Use relative units */
+            width: 100%; /* Adjust button width */
+            height: 10%;
+        }
+        #toggleCircleButton {
+            margin: 10px 0;
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            background: linear-gradient(135deg, #00d4ff, #007bff);
+            color: white;
+            cursor: pointer;
+            transition: background 0.3s ease, transform 0.3s ease;
+        }
+        #toggleCircleButton:hover {
+            background: linear-gradient(135deg, #007bff, #00d4ff);
+            transform: scale(1.1);
+        }
+        #robotStatus {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.7);
+            color: #ffffff;
+            padding: 1vw; /* Adjust padding */
+            border-radius: 1vw; /* Adjust border radius */
+            display: none;
+            pointer-events: none;
+            font-size: 1vw; /* Adjust font size */
+            z-index: 3; /* Ensure it is above other elements */
+            border: 0.2vw solid #00d4ff; /* Add border */
+            box-shadow: 0 0 1vw #00d4ff; /* Add shadow */
+        }
+        .star {
+            position: absolute;
+            width: 5px;
+            height: 5px;
+            background: #ffffff;
+            border-radius: 50%;
+            box-shadow: 0 0 10px #ffffff;
+            pointer-events: none; /* Ensure stars do not interfere with interactions */
+            animation: moveStar 20s linear infinite;
+        }
+        @keyframes moveStar {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(200px, 200px); }
+        }
+        .stars-container {
+            overflow: hidden;
+            position: fixed; /* Ensure the container is fixed */
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0; /* Ensure stars are behind other elements */
+        }
+        .nebula {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('path/to/nebula-image.jpg') no-repeat center center;
+            background-size: cover;
+            z-index: -1; /* Ensure nebula is behind stars */
+        }
+        .footer-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 10px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px #00d4ff;
+            position: relative; /* Ensure stars are not placed inside these containers */
+            z-index: 1;
+        }
+        #coordinatesContainer {
+            position: absolute;
+            top: 1vw; /* Use relative units */
+            left: 5vw; /* Use relative units */
+            background: rgba(0, 0, 0, 0.5);
+            padding: 1vw; /* Use relative units */
+            border-radius: 1vw; /* Use relative units */
+            box-shadow: 0 0 2vw #00d4ff; /* Use relative units */
+            z-index: 2;
+            height: auto; /* Adjust height to fit content */
+            width: 12vw; /* Reduce width */
+        }
+        
+        #coordinatesContainer.position-5 > div {
+            width: 78%; /* Adjust width of inner divs */
+            margin-bottom: 1vw; /* Add spacing between divs */
+            
+        }
+        #coordinatesContainer:not(.position-5) {
+            width: 8vw; /* Further reduce width */
+            height: auto; /* Adjust height to fit content */
+        }
+        #coordinates, #ballCoordinates, #robotCoordinates {
+            font-size: 12px; /* Reduce font size */
+            color: #00d4ff;
+            text-align: left;
+        }
+        #coordinatesPositionSelect {
+            margin: 10px 0;
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            background: linear-gradient(135deg, #00d4ff, #007bff);
+            color: white;
+            cursor: pointer;
+            transition: background 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        #coordinatesPositionSelect:hover {
+            background: linear-gradient(135deg, #007bff, #00d4ff);
+            transform: scale(1.1);
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.2);
+        }
+        #coordinatesPositionButton {
+            margin: 10px 0;
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            background: linear-gradient(135deg, #00d4ff, #007bff);
+            color: white;
+            cursor: pointer;
+            transition: background 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        #coordinatesPositionButton:hover {
+            background: linear-gradient(135deg, #007bff, #00d4ff);
+            transform: scale(1.1);
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.2);
+        }
+        #coordinatesPositionModal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+        }
+        #coordinatesPositionContent {
+            background-color: rgba(255, 255, 255, 0.1);
+            margin: 10% auto;
+            padding: 20px;
+            border: 2px solid #00d4ff;
+            width: 80%;
+            max-width: 800px;
+            border-radius: 10px;
+            color: #ffffff;
+            box-shadow: 0 0 20px #00d4ff;
+            text-align: center;
+        }
+        #closeCoordinatesPositionModal {
+            color: #00d4ff;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        #closeCoordinatesPositionModal:hover,
+        #closeCoordinatesPositionModal:focus {
+            color: #ffffff;
+            text-decoration: none;
+        }
+        #coordinatesPositionContent h2 {
+            text-align: center;
+        }
+        .position-preview {
+            display: inline-block;
+            width: 50px;
+            height: 50px;
+            margin: 5px;
+            border: 2px solid #00d4ff;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.1);
+            position: relative;
+        }
+        .coordinates-window {
+            position: absolute;
+            width: 20px;
+            height: 10px;
+            background: rgba(255, 255, 255, 0.8); /* White background to symbolize the coordinates window */
+            border: 1px solid #00d4ff;
+        }
+        .position-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .position-number {
+            margin-right: 10px;
+            font-size: 1.2em;
+            color: #00d4ff;
+        }
+        .field-preview {
+            display: inline-block;
+            width: 100px;
+            height: 50px;
+            border: 2px solid #00d4ff;
+            border-radius: 5px;
+            background: rgba(0, 128, 0, 0.5); /* Green background to symbolize the field */
+            position: relative;
+        }
+        #toggleStarMovement {
+            margin: 10px 0;
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            background: linear-gradient(135deg, #00d4ff, #007bff);
+            color: white;
+            cursor: pointer;
+            transition: background 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        #toggleStarMovement:hover {
+            background: linear-gradient(135deg, #007bff, #00d4ff);
+            transform: scale(1.1);
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.2);
+        }
+        .stars-container {
+            overflow: hidden;
+            position: fixed; /* Ensure the container is fixed */
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0; /* Ensure stars are behind other elements */
+        }
+        .galaxy-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            overflow: hidden;
+            display: none; /* Initially hidden */
+        }
+        .galaxy {
+            position: absolute;
+            width: 2000px;
+            height: 2000px;
+            background: radial-gradient(circle, rgb(120, 3, 77) 0%, rgba(47, 11, 144, 0) 70%);
+            border-radius: 50%;
+            animation: rotateGalaxy 60s linear infinite;
+            opacity: 0.5;
+        }
+        .galaxy::before, .galaxy::after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: inherit;
+            border-radius: inherit;
+            animation: inherit;
+            opacity: inherit;
+        }
+        .galaxy::before {
+            transform: rotate(120deg);
+        }
+        .galaxy::after {
+            transform: rotate(240deg);
+        }
+        .galaxy .star {
+            position: absolute;
+            width: 5px;
+            height: 5px;
+            background: white;
+            border-radius: 50%;
+            box-shadow: 0 0 10px white;
+        }
+        .galaxy .star:nth-child(odd) {
+            background: yellow;
+            box-shadow: 0 0 10px yellow;
+        }
+        .galaxy .star:nth-child(even) {
+            background: rgb(255, 255, 255);
+            box-shadow: 0 0 10px rgb(255, 0, 0);
+        }
+        @keyframes rotateGalaxy {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        @media (max-width: 1200px) {
+            .container {
+                flex-direction: column;
+                align-items: center;
+            }
+            canvas {
+                margin: auto;
+            }
+            #coordinatesContainer {
+                position: static;
+                width: 100%;
+                margin-bottom: 2vw; /* Use relative units */
+            }
+            .left-container {
+                margin-right: 0;
+                margin-bottom: 2vw; /* Use relative units */
+                width: 100%; /* Make container responsive */
+                max-width: 90vw; /* Limit maximum width */
+            }
+            .controls {
+                width: 100%;
+                padding: 1vw; /* Use relative units */
+                margin-right: 0;
+                margin-bottom: 2vw; /* Use relative units */
+                height: 100%; /* Adjust height */
+                max-width: 90vw; /* Limit maximum width */
+            }
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2em;
+            }
+            #controls {
+                width: 100%;
+                padding: 1vw; /* Use relative units */
+                height: 100%; /* Adjust height */
+            }
+            #controls button {
+                width: 100%;
+                font-size: 2vw; /* Use relative units */
+            }
+            .left-container button {
+                font-size: 2vw; /* Use relative units */
+                padding: 2vw 2vw; /* Use relative units */
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 1vw; /* Use relative units */
+            }
+            h1 {
+                font-size: 1.5em;
+            }
+            #coordinatesContainer {
+                font-size: 1.2vw; /* Use relative units */
+            }
+            #coordinates, #ballCoordinates, #robotCoordinates {
+                font-size: 1.2vw; /* Use relative units */
+            }
+            #controls button {
+                font-size: 2vw; /* Use relative units */
+                padding: 0.8vw; /* Use relative units */
+            }
+            .left-container button {
+                font-size: 2vw; /* Use relative units */
+                padding: 3vw 6vw; /* Use relative units */
+            }
+            .h2 {
+                font-size: 1.5em;
+            }
+        }
+        #coordinatesContainer.position-6 {
+            top: 8px;
+            left: -995px;
+            height: auto;
+            width: 60vw; /* Adjust width for horizontal layout */
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center; /* Center the text horizontally */
+            text-align: center; /* Center the text */
+        }
+        #coordinatesContainer.position-6 > div {
+            display: inline-block;
+            margin-right: 1vw; /* Add spacing between inline elements */
+        }
+    </style>
+</head>
+<body>
+    <div class="galaxy-container">
+        <div class="galaxy"></div>
+    </div>
+    <header>
+        
+    </header>
+    <h1>Simulateur Mathématiques RSK</h1>
+    <div class="container">
+        <div class="left-container">
+            <h2>Terrain</h2>
+            <button id="deselectRobotButton">Désélectionner le Robot</button>
+            <button id="mathFormulasButton">Informations du Match</button>
+            <button id="resetRobotsButton">Réinitialiser</button>
+            <button id="toggleCircleButton">Afficher le "ball abuse"</button>
+        </div>
+        <canvas id="soccerField" width="1200" height="600"></canvas>
+        <div id="controls">
+            <h2>Liens</h2>
+            <button id="goToLesAmicalesButton">Les Amicales</button>
+            <button id="contactButton">Contact</button> <!-- Added Contact button -->
+            <button id="goToSimulateurRSKButton">Simulateur RSK</button>
+            
+            <h2>Personalisation</h2>
+            <button id="settingsButton">Choix des couleurs</button>
+            <button id="coordinatesPositionButton">Affichage des coordonnées</button>
+            <button id="toggleGalaxyButton">Afficher la galaxie</button>
+            
+        </div>
+    </div>
+    <div id="coordinatesContainer" class="position-5">
+        <div id="coordinates">Coordonnées: (0,0)</div>
+        <div id="ballCoordinates">Coordonnées du Ballon: (0, 0)</div>
+        <div id="robotCoordinates">Coordonnées des Robots:</div>
+    </div>
+    <div class="stars-container"></div>
+    <div id="outOfBoundsMessage">Balle en dehors du terrain</div>
+    <div id="goalMessage">But!</div>
+    <div id="mathFormulasModal">
+        <div id="mathFormulasContent">
+            <span id="closeModal">&times;</span>
+            <h2>Informations du Match</h2>
+            <ul>
+                <li>Game en cours: {{ referee_data.game_is_running }}</li>
+                <li>Game sur pause: {{ referee_data.game_paused }}</li>
+                <li>Mi-temps en cours: {{ referee_data.halftime_is_running }}</li>
+                <li>Team Blue Score: {{ referee_data.teams_blue_score }}</li>
+                <li>Team Blue du coté positif: {{ referee_data.teams_blue_x_positive }}</li>
+                <li>Team Green Score: {{ referee_data.teams_green_score }}</li>
+                <li>Team Green du coté positif: {{ referee_data.teams_green_x_positive }}</li>
+            </ul>
+        </div>
+    </div>
+    <div id="settingsModal">
+        <div id="settingsContent">
+            <span id="closeSettingsModal">&times;</span>
+            <h2>Paramètres de l'Interface</h2>
+            <label for="backgroundColor">Couleur de fond:</label>
+            <input type="color" id="backgroundColor" name="backgroundColor" value="#0f2027">
+            <label for="textColor">Couleur du texte:</label>
+            <input type="color" id="textColor" name="textColor" value="#ffffff">
+            <label for="buttonColor">Couleur des boutons:</label>
+            <input type="color" id="buttonColor" name="buttonColor" value="#00d4ff">
+            <label for="fieldColor1">Couleur du terrain (dégradé 1):</label>
+            <input type="color" id="fieldColor1" name="fieldColor1" value="#005800">
+            <label for="fieldColor2">Couleur du terrain (dégradé 2):</label>
+            <input type="color" id="fieldColor2" name="fieldColor2" value="#003300">
+            <label for="toggleCircleCheckbox">Afficher le cercle autour de la balle:</label>
+            <input type="checkbox" id="toggleCircleCheckbox" name="toggleCircleCheckbox">
+            <label for="circleColor">Couleur du cercle:</label>
+            <input type="color" id="circleColor" name="circleColor" value="#ffffff">
+            <label for="galaxyColor">Couleur de la galaxie:</label>
+            <input type="color" id="galaxyColor" name="galaxyColor" value="#78034d">
+            <label for="boxShadowColor">Couleur de l'ombre portée:</label>
+            <input type="color" id="boxShadowColor" name="boxShadowColor" value="#00d4ff">
+            <label for="toggleStarMovement">Mouvement des étoiles:</label>
+            <button id="toggleStarMovement">Pause</button>
+        </div>
+    </div>
+    <div id="coordinatesPositionModal">
+        <div id="coordinatesPositionContent">
+            <span id="closeCoordinatesPositionModal">&times;</span>
+            <h2>Placement des coordonnées</h2>
+            <div class="previews">
+                <div class="position-row">
+                    <span class="position-number">1</span>
+                    <div class="position-preview" data-position="0">
+                        <div class="field-preview">
+                            <div class="coordinates-window" style="top: 10%; left: 10%;"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="position-row">
+                    <span class="position-number">2</span>
+                    <div class="position-preview" data-position="1">
+                        <div class="field-preview">
+                            <div class="coordinates-window" style="top: 90%; left: 10%;"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="position-row">
+                    <span class="position-number">3</span>
+                    <div class="position-preview" data-position="2">
+                        <div class="field-preview">
+                            <div class="coordinates-window" style="top: 90%; left: 90%;"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="position-row">
+                    <span class="position-number">4</span>
+                    <div class="position-preview" data-position="3">
+                        <div class="field-preview">
+                            <div class="coordinates-window" style="top: 10%; left: 90%;"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="position-row">
+                    <span class="position-number">5</span>
+                    <div class="position-preview" data-position="4">
+                        <div class="field-preview">
+                            <div class="coordinates-window" style="top: 30%; left: 110%;"></div> <!-- Adjusted position -->
+                        </div>
+                    </div>
+                </div>
+                <div class="position-row">
+                    <span class="position-number">6</span>
+                    <div class="position-preview" data-position="5">
+                        <div class="field-preview">
+                            <div class="coordinates-window" style="top: 10%; left: 10%;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="robotStatus"></div>
+    <script>
+        // Load environment variables
+        const env = {
+            UPDATE_FIELD_ROUTE: '/outils/maths/update_field',
+            RESET_ROBOTS_ROUTE: '/outils/maths/reset_robots',
+            MOVE_ROBOT_ROUTE: '/outils/maths/move_robot',
+            TELEPORT_BALL_ROUTE: '/outils/maths/teleport_ball'
+        };
+
+        const canvas = document.getElementById('soccerField');
+        const ctx = canvas.getContext('2d');
+        const coordinatesDisplay = document.getElementById('coordinates');
+        const ballCoordinatesDisplay = document.getElementById('ballCoordinates');
+        const robotCoordinatesDisplay = document.getElementById('robotCoordinates');
+        const robotStatus = document.getElementById('robotStatus');
+
+        function convertCoords(x, y, toCanvas = false) {
+            const rect = canvas.getBoundingClientRect(); // Get the size of the canvas
+            const scaleX = canvas.width / rect.width; // Determine the scale factor for the x-coordinate
+            const scaleY = canvas.height / rect.height; //And for the y-coordinate
+            const width = canvas.width;
+            const height = canvas.height;
+            const scaleFactor = Math.min(width, height) / 2;
+
+            if (toCanvas) {
+                return [(x * scaleFactor) + (width / 2), (y * -scaleFactor) + (height / 2)];
+            } else {
+                const adjustedX = x * scaleX;
+                const adjustedY = y * scaleY;
+                return [(adjustedX - (width / 2)) / scaleFactor, ((height / 2) - adjustedY) / scaleFactor];
+            }
+        }
+
+        function drawCircle(x, y, r, color, fill = true) {
+            const [cx, cy] = convertCoords(x, y, true);
+            ctx.beginPath();
+            ctx.arc(cx, cy, r * Math.min(canvas.width, canvas.height) / 2, 0, 2 * Math.PI); // Adjust radius back to 1:1 scale
+            ctx.strokeStyle = color;
+            ctx.fillStyle = color;
+            if (fill) {
+                ctx.fill();
+            } else {
+                ctx.stroke();
+            }
+        }
+
+        function drawStaticElements() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw field background with gradient
+            const gradient = ctx.createRadialGradient(canvas.width / 2, canvas.height / 2, 0, canvas.width / 2, canvas.height / 2, canvas.width / 2);
+            gradient.addColorStop(0, fieldColor1Input.value);
+            gradient.addColorStop(1, fieldColor2Input.value);
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+           
+
+            // Draw field boundaries
+            ctx.strokeStyle = 'white';
+            ctx.lineWidth = 5;
+            ctx.strokeRect(...convertCoords(-1, -0.6, true), convertCoords(0.0, 2.2, true)[0], convertCoords(2, 2.2, true)[1]);
+
+            // Draw center circle
+            drawCircle(0, 0, 0.3, 'black', false);
+
+            // Draw goals with more realistic graphics
+            function drawGoal(x, y, width, height) {
+                ctx.beginPath();
+                ctx.moveTo(...convertCoords(x, y - 0.1, true)); // Adjust y-coordinate
+                ctx.lineTo(...convertCoords(x, y + height + 0.1, true)); // Adjust y-coordinate
+                ctx.lineTo(...convertCoords(x + width, y + height + 0.1, true)); // Adjust y-coordinate
+                ctx.lineTo(...convertCoords(x + width, y - 0.1, true)); // Adjust y-coordinate
+                ctx.closePath();
+                ctx.strokeStyle = 'black';
+                ctx.lineWidth = 5;
+                ctx.stroke();
+
+                // Draw net
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+                ctx.lineWidth = 1;
+                for (let i = 0; i <= width; i += 0.1) {
+                    ctx.beginPath();
+                    ctx.moveTo(...convertCoords(x + i, y - 0.1, true)); // Adjust y-coordinate
+                    ctx.lineTo(...convertCoords(x + i, y + height + 0.1, true)); // Adjust y-coordinate
+                    ctx.stroke();
+                }
+                for (let i = 0; i <= height; i += 0.1) {
+                    ctx.beginPath();
+                    ctx.moveTo(...convertCoords(x, y + i - 0.1, true)); // Adjust y-coordinate
+                    ctx.lineTo(...convertCoords(x + width, y + i - 0.1, true)); // Adjust y-coordinate
+                    ctx.stroke();
+                }
+
+                // Draw goal posts
+                ctx.fillStyle = 'black';
+            }
+
+            drawGoal(-1, -0.3, 0.3, 0.6);
+            drawGoal(0.7, -0.3, 0.3, 0.6);
+
+            // Draw additional static elements
+            ctx.beginPath();
+            ctx.moveTo(...convertCoords(-1, -0.3, true));
+            ctx.lineTo(...convertCoords(-0.9, -0.3, true));
+            ctx.moveTo(...convertCoords(-1, 0.3, true));
+            ctx.lineTo(...convertCoords(-0.9, 0.3, true));
+            ctx.moveTo(...convertCoords(1, -0.3, true));
+            ctx.lineTo(...convertCoords(0.9, -0.3, true));
+            ctx.moveTo(...convertCoords(1, 0.3, true));
+            ctx.lineTo(...convertCoords(0.9, 0.3, true));
+            ctx.strokeStyle = 'white';
+            ctx.lineWidth = 5;
+            ctx.stroke();
+
+            // Draw grid with graduations
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+            ctx.lineWidth = 1;
+            ctx.font = '12px Arial';
+            ctx.fillStyle = 'white';
+            for (let x = -1; x <= 1; x += 0.1) {
+                ctx.beginPath();
+                ctx.moveTo(...convertCoords(x, -0.6, true));
+                ctx.lineTo(...convertCoords(x, 0.6, true));
+                ctx.stroke();
+                
+            }
+            for (let x= -1;x<=1;x+=0.5){
+                if (Math.abs(x % 0.5) < 0.5) {
+                    ctx.fillText(x.toFixed(1), ...convertCoords(x-0.03, -0.7, true));
+                    
+                }
+            }
+            for (let y = -0.6; y <= 0.6; y += 0.1) {
+                ctx.beginPath();
+                ctx.moveTo(...convertCoords(-1, y, true));
+                ctx.lineTo(...convertCoords(1, y, true));
+                ctx.stroke();
+                if (Math.abs(y % 0.5) < 0.01) {
+                    ctx.fillText(y.toFixed(1), ...convertCoords(-1.1, y, true));
+                }
+            }
+
+            // Draw black points
+            drawCircle(0.45, 0.3, 0.02, 'black');
+            drawCircle(0.45, -0.3, 0.02, 'black');
+            drawCircle(-0.45, 0.3, 0.02, 'black');
+            drawCircle(-0.45, -0.3, 0.02, 'black');
+            drawCircle(0, 0, 0.02, 'black');
+
+            ctx.restore(); // Restore the context to remove scaling
+        }
+
+        function drawCircleWithBorder(x, y, r, color, borderColor, borderWidth) {
+            const [cx, cy] = convertCoords(x, y, true);
+            ctx.beginPath();
+            ctx.arc(cx, cy, r * Math.min(canvas.width, canvas.height) / 2, 0, 2 * Math.PI); // Adjust radius back to 1:1 scale
+            ctx.strokeStyle = borderColor;
+            ctx.lineWidth = borderWidth;
+            ctx.stroke();
+            ctx.fillStyle = color;
+            ctx.fill();
+        }
+
+        let showCircle = false;
+        let circleColor = '#ffffff';
+
+        function drawDynamicElements(client) {
+            // Draw the ball
+            const ball = client.ball;
+            drawCircle(ball[0], ball[1], 0.05, 'orange');
+            ballCoordinatesDisplay.textContent = `Coordonnées du Ballon:  (${ball[0].toFixed(2)},${ball[1].toFixed(2)})`;
+
+            // Check if a goal is scored and draw a red circle around the center point (0,0)
+            const goalMessage = document.getElementById('goalMessage');
+            const isGoal = (ball[0] > 0.9 && ball[0] < 2 && ball[1] > -0.3 && ball[1] < 0.3) || 
+                           (ball[0] < -0.9 && ball[0] > -2 && ball[1] > -0.3 && ball[1] < 0.3);
+            if (isGoal) {
+                drawCircle(0, 0, 0.1, 'red', false);
+                goalMessage.style.display = 'block';
+                goalMessage.style.left = '10vw'; // Center the message relative to the field
+                goalMessage.style.bottom = '3vw'; // Adjust vertical position
+                goalMessage.style.zIndex = 10; // Ensure it is above other elements
+                goalMessage.style.color = ball[0] > 0.9 ? '#00FFFF' : '#7CFC00'; // Color based on which team scored
+            } else {
+                goalMessage.style.display = 'none';
+            }
+
+            // Check if ball is out of bounds and draw a circle around the nearest of the four specified points
+            const points = [
+                [0.45, 0.3],
+                [0.45, -0.3],
+                [-0.45, 0.3],
+                [-0.45, -0.3]
+            ];
+            const outOfBoundsMessage = document.getElementById('outOfBoundsMessage');
+            if (!isGoal && (ball[0] < -1 || ball[0] > 1 || ball[1] < -0.6 || ball[1] > 0.6)) {
+                let nearestPoint = points.reduce((prev, curr) => {
+                    const prevDist = Math.sqrt((ball[0] - prev[0]) ** 2 + (ball[1] - prev[1]) ** 2);
+                    const currDist = Math.sqrt((ball[0] - curr[0]) ** 2 + (ball[1] - curr[1]) ** 2);
+                    return currDist < prevDist ? curr : prev;
+                });
+                drawCircle(nearestPoint[0], nearestPoint[1], 0.1, 'red', false);
+                outOfBoundsMessage.style.display = 'block';
+                outOfBoundsMessage.style.left = '18.5vw'; // Center the message relative to the field
+                outOfBoundsMessage.style.bottom = '3vw'; // Pink color
+            } else {
+                outOfBoundsMessage.style.display = 'none';
+            }
+
+            // Draw robots
+            const robots = [
+                { color: 'green', id: 1, pose: client.robot.green[1].pose, penalized: client.robot.green[1].penalized },
+                { color: 'green', id: 2, pose: client.robot.green[2].pose, penalized: client.robot.green[2].penalized },
+                { color: 'blue', id: 1, pose: client.robot.blue[1].pose, penalized: client.robot.blue[1].penalized },
+                { color: 'blue', id: 2, pose: client.robot.blue[2].pose }
+            ];
+
+            let robotCoordinatesText = 'Coordonnées des Robots: ';
+            robots.forEach(robot => {
+                const [x, y, orientation] = robot.pose;
+                const color = robot.color === 'green' ? '#7CFC00' : 'blue';  // Lighter green for green robots
+                const borderColor = selectedRobot && selectedRobot.color === robot.color && selectedRobot.id === robot.id ? 'red' : 'black';
+                const borderWidth = selectedRobot && selectedRobot.color === robot.color && selectedRobot.id === robot.id ? 5 : 2;
+                drawCircleWithBorder(x, y, 0.1, color, borderColor, borderWidth);
+
+                // Draw orientation line
+                const lineLength = 0.1;
+                const x_end = x + lineLength * Math.cos(orientation);
+                const y_end = y + lineLength * Math.sin(orientation);
+                ctx.beginPath();
+                ctx.moveTo(...convertCoords(x, y, true));
+                ctx.lineTo(...convertCoords(x_end, y_end, true));
+                ctx.strokeStyle = '#FF69B4';  // Pink color
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                ctx.fillStyle = 'white';
+                ctx.font = '20px Arial';
+                ctx.fillText(robot.id, ...convertCoords(x, y, true)); // Add robot number
+
+                robotCoordinatesText += `${robot.color} ${robot.id}: (${x.toFixed(2)}, ${y.toFixed(2)}), `;
+            });
+            robotCoordinatesDisplay.innerHTML = robotCoordinatesText.slice(0, -2); // Remove the last comma and space
+
+            if (showCircle) {
+                drawCircle(client.ball[0], client.ball[1], 0.25, circleColor, false);
+            }
+        }
+
+        let client = { ball: [0, 0], robot: { green: { 1: { pose: [0, 0, 0] }, 2: { pose: [0, 0, 0] } }, blue: { 1: { pose: [0, 0, 0] }, 2: { pose: [0, 0, 0] } } } };
+
+        function fetchLatestPositions() {
+            fetch(env.UPDATE_FIELD_ROUTE)
+                .then(response => response.json())
+                .then(data => {
+                    client = data; // Update client data from server
+                    updateField(client);
+                })
+                .catch(error => console.error('Erreur lors de la récupération des dernières positions:', error));
+        }
+
+        function updateField(client) {
+            drawStaticElements();
+            drawDynamicElements(client);
+        }
+
+        function animateRobotMovement(robot, targetX, targetY, duration = 1000) {
+            const startX = robot.pose[0];
+            const startY = robot.pose[1];
+            const startTime = performance.now();
+
+            function animate(time) {
+                const elapsed = time - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                const newX = startX + (targetX - startX) * progress;
+                const newY = startY + (targetY - startY) * progress;
+
+                robot.pose[0] = newX;
+                robot.pose[1] = newY;
+
+                updateField(client);
+
+                if (progress < 1) {
+                    requestAnimationFrame(animate);
+                }
+            }
+
+            requestAnimationFrame(animate);
+        }
+
+        function resetRobots() {
+            fetch(env.RESET_ROBOTS_ROUTE, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    fetchLatestPositions(); // Fetch the latest positions to update the field
+                }
+            })
+            .catch(error => console.error('Erreur lors de la réinitialisation des robots:', error));
+        }
+
+        let selectedRobot = null;
+        let lastUpdateTime = 0;
+
+        function animationLoop(timestamp) {
+            if (timestamp - lastUpdateTime >= 1) { // Update every 1000ms (1 second) for 1 FPS
+                fetchLatestPositions();
+                lastUpdateTime = timestamp;
+            }
+            requestAnimationFrame(animationLoop);
+        }
+
+        canvas.addEventListener('mousemove', (event) => {
+            const rect = canvas.getBoundingClientRect();
+            const x = event.clientX - rect.left;
+            const y = event.clientY - rect.top;
+            const [fieldX, fieldY] = convertCoords(x, y);
+            coordinatesDisplay.textContent = `Coordonnées: (${fieldX.toFixed(2)},${fieldY.toFixed(2)})`;
+
+            const robots = [
+                { color: 'green', id: 1, pose: client.robot.green[1].pose, penalized: client.robot.green[1].penalized, penalizedReason: client.robot.green[1]['penalized reason'], penalizedRemaining: client.robot.green[1]['penalized remaining'],  },
+                { color: 'green', id: 2, pose: client.robot.green[2].pose, penalized: client.robot.green[2].penalized, penalizedReason: client.robot.green[2]['penalized reason'], penalizedRemaining: client.robot.green[2]['penalized remaining'],  },
+                { color: 'blue', id: 1, pose: client.robot.blue[1].pose, penalized: client.robot.blue[1].penalized, penalizedReason: client.robot.blue[1]['penalized reason'], penalizedRemaining: client.robot.blue[1]['penalized remaining'],  },
+                { color: 'blue', id: 2, pose: client.robot.blue[2].pose, penalized: client.robot.blue[2].penalized, penalizedReason: client.robot.blue[2]['penalized reason'], penalizedRemaining: client.robot.blue[2]['penalized remaining'],  }
+            ];
+
+            const hoveredRobot = robots.find(robot => {
+                    const [rx, ry] = convertCoords(robot.pose[0], robot.pose[1], true);
+                    // Scale the clickable radius based on the current scale of the canvas
+                    const scaleX = canvas.width / rect.width;
+                    const scaleY = canvas.height / rect.height;
+                    const scaledX = x * scaleX;
+                    const scaledY = y * scaleY;
+                    const distance = Math.sqrt((scaledX - rx) ** 2 + (scaledY - ry) ** 2);
+                    return distance < 25 * Math.min(scaleX, scaleY); // Scale the clickable radius and assuming 25 pixels as the clickable radius
+                });
+
+            if (hoveredRobot) {
+                const penalizedText = hoveredRobot.penalized ? 'oui' : 'non';
+                robotStatus.innerHTML = `Pénalisé : ${penalizedText}<br>Coordonnées: (${hoveredRobot.pose[0].toFixed(2)}, ${hoveredRobot.pose[1].toFixed(2)})<br>Raison de la pénalisation: ${hoveredRobot.penalizedReason}<br>Temps restant de la pénalisation: ${hoveredRobot.penalizedRemaining},`;
+                robotStatus.style.display = 'block';
+                
+                robotStatus.style.left = `${event.clientX + 30}px`;
+                robotStatus.style.top = `${event.clientY + 10}px`;
+            } else {
+                robotStatus.style.display = 'none';
+            }
+        });
+
+        canvas.addEventListener('click', (event) => {
+            const rect = canvas.getBoundingClientRect();
+            const x = event.clientX - rect.left;
+            const y = event.clientY - rect.top;
+            const [fieldX, fieldY] = convertCoords(x, y); // Convert to field coordinates
+
+            const robots = [
+                { color: 'green', id: 1, pose: client.robot.green[1].pose },
+                { color: 'green', id: 2, pose: client.robot.green[2].pose },
+                { color: 'blue', id: 1, pose: client.robot.blue[1].pose },
+                { color: 'blue', id: 2, pose: client.robot.blue[2].pose }
+            ];
+
+            if (selectedRobot) {
+                const { color, id } = selectedRobot;
+                fetch(env.MOVE_ROBOT_ROUTE, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ color, id, x: fieldX, y: fieldY, alpha: 0 }) // Assuming alpha = 0 for simplicity
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        animateRobotMovement(client.robot[color][id], fieldX, fieldY);
+                        selectedRobot = null; // Deselect robot after moving
+                    }
+                })
+                .catch(error => console.error('Erreur lors du déplacement du robot:', error));
+            } else {
+                // Check if a robot is clicked
+                const clickedRobot = robots.find(robot => {
+                    const [rx, ry] = convertCoords(robot.pose[0], robot.pose[1], true);
+                    // Scale the clickable radius based on the current scale of the canvas
+                    const scaleX = canvas.width / rect.width;
+                    const scaleY = canvas.height / rect.height;
+                    const scaledX = x * scaleX;
+                    const scaledY = y * scaleY;
+                    const distance = Math.sqrt((scaledX - rx) ** 2 + (scaledY - ry) ** 2);
+                    return distance < 25 * Math.min(scaleX, scaleY); // Scale the clickable radius and assuming 25 pixels as the clickable radius
+                });
+
+                if (clickedRobot) {
+                    selectedRobot = clickedRobot;
+                    updateField(client); // Update field to show selected robot
+                } else {
+                    fetch(env.TELEPORT_BALL_ROUTE, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ x: fieldX, y: fieldY })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            client.ball = [fieldX, fieldY]; // Update ball position in client
+                            updateField(client); // Update field with new ball position
+                        }
+                    })
+                    .catch(error => console.error('Erreur lors de la téléportation du ballon:', error));
+                }
+            }
+        });
+
+        document.getElementById('deselectRobotButton').addEventListener('click', () => {
+            selectedRobot = null;
+            updateField(client); // Update field to remove selection highlight
+        });
+
+        document.getElementById('goToLesAmicalesButton').addEventListener('click', () => {
+            window.location.href = 'https://les-amicales.fr';
+        });
+
+        const mathFormulasButton = document.getElementById('mathFormulasButton');
+        const modal = document.getElementById('mathFormulasModal');
+        const closeModal = document.getElementById('closeModal');
+
+        mathFormulasButton.onclick = function() {
+            modal.style.display = 'block';
+        }
+
+        closeModal.onclick = function() {
+            modal.style.display = 'none';
+        }
+
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                modal.style.display = 'none';
+            }
+        }
+
+        document.getElementById('resetRobotsButton').addEventListener('click', resetRobots);
+
+        const settingsButton = document.getElementById('settingsButton');
+        const settingsModal = document.getElementById('settingsModal');
+        const closeSettingsModal = document.getElementById('closeSettingsModal');
+        const backgroundColorInput = document.getElementById('backgroundColor');
+        const textColorInput = document.getElementById('textColor');
+        const buttonColorInput = document.getElementById('buttonColor');
+        const fieldColor1Input = document.getElementById('fieldColor1');
+        const fieldColor2Input = document.getElementById('fieldColor2');
+        const toggleCircleCheckbox = document.getElementById('toggleCircleCheckbox');
+        const circleColorInput = document.getElementById('circleColor');
+        const galaxyColorInput = document.getElementById('galaxyColor');
+        const boxShadowColorInput = document.getElementById('boxShadowColor');
+
+        settingsButton.onclick = function() {
+            settingsModal.style.display = 'block';
+        }
+
+        closeSettingsModal.onclick = function() {
+            settingsModal.style.display = 'none';
+        }
+
+        window.onclick = function(event) {
+            if (event.target == settingsModal) {
+                settingsModal.style.display = 'none';
+            }
+        }
+
+        backgroundColorInput.oninput = function() {
+            document.body.style.background = backgroundColorInput.value;
+        }
+
+        textColorInput.oninput = function() {
+            document.body.style.color = textColorInput.value;
+            document.querySelector('h1').style.color = textColorInput.value;
+            document.querySelectorAll('#coordinates, #ballCoordinates, #robotCoordinates').forEach(element => {
+                element.style.color = textColorInput.value;
+            });
+        }
+
+        buttonColorInput.oninput = function() {
+            const buttons = document.querySelectorAll('#controls button, #mathFormulasButton, #settingsButton, .left-container button');
+            buttons.forEach(button => {
+                button.style.background = buttonColorInput.value;
+            });
+        }
+
+        fieldColor1Input.oninput = function() {
+            updateField(client);
+        }
+
+        fieldColor2Input.oninput = function() {
+            updateField(client);
+        }
+
+        toggleCircleCheckbox.addEventListener('change', (event) => {
+            showCircle = event.target.checked;
+            updateField(client);
+        });
+
+        circleColorInput.addEventListener('input', (event) => {
+            circleColor = event.target.value;
+            updateField(client);
+        });
+
+        document.getElementById('toggleCircleButton').addEventListener('click', () => {
+            showCircle = !showCircle;
+            updateField(client);
+        });
+
+        document.getElementById('goToSimulateurRSKButton').addEventListener('click', () => {
+            window.location.href = 'https://rsk.simulateur.les-amicales.fr/'; // Add the link here
+        });
+
+        document.getElementById('contactButton').addEventListener('click', () => {
+            window.location.href = 'https://birds-audiovisuel.fr/contact/';
+        });
+
+        let starAnimationPaused = false;
+
+        function createStars() {
+            const starCount = 100;
+            const starsContainer = document.querySelector('.stars-container');
+            for (let i = 0; i < starCount; i++) {
+                const star = document.createElement('div');
+                star.classList.add('star');
+                star.style.top = `${Math.random() * 100}%`;
+                star.style.left = `${Math.random() * 100}%`;
+                star.style.animationDelay = `${Math.random() * 20}s`; // Add random delay to ensure continuous appearance
+                starsContainer.appendChild(star);
+            }
+        }
+
+        document.getElementById('toggleStarMovement').addEventListener('click', () => {
+            const stars = document.querySelectorAll('.star');
+            starAnimationPaused = !starAnimationPaused;
+            stars.forEach(star => {
+                star.style.animationPlayState = starAnimationPaused ? 'paused' : 'running';
+            });
+            document.getElementById('toggleStarMovement').textContent = starAnimationPaused ? 'Play' : 'Pause';
+        });
+
+        const coordinatesContainer = document.getElementById('coordinatesContainer');
+        const positions = [
+            { top: '1vw', left: '-64vw', height:'10vw' },
+            { top: '19vw', left: '-64vw' },
+            { top: '19vw', left: '-15vw' },
+            { top: '1vw', left: '-15vw' },
+            { container: 'left-container', height: '400%', top : '-20px' },
+            { top: '-5vw', left: '-64.5vw', height: 'auto', width: '60vw' } // New position 6
+        ];
+
+        const coordinatesPositionButton = document.getElementById('coordinatesPositionButton');
+        const coordinatesPositionModal = document.getElementById('coordinatesPositionModal');
+        const closeCoordinatesPositionModal = document.getElementById('closeCoordinatesPositionModal');
+
+        coordinatesPositionButton.onclick = function() {
+            coordinatesPositionModal.style.display = 'block';
+        }
+
+        closeCoordinatesPositionModal.onclick = function() {
+            coordinatesPositionModal.style.display = 'none';
+        }
+
+        window.onclick = function(event) {
+            if (event.target == coordinatesPositionModal) {
+                coordinatesPositionModal.style.display = 'none';
+            }
+        }
+
+        const previews = document.querySelectorAll('.position-preview');
+        previews.forEach(preview => {
+            preview.addEventListener('click', (event) => {
+                const position = event.currentTarget.getAttribute('data-position');
+                previews.forEach(p => p.classList.remove('selected'));
+                event.currentTarget.classList.add('selected');
+                const pos = positions[position];
+                coordinatesContainer.classList.remove('position-5', 'position-6'); // Remove both classes
+                if (pos.container) {
+                    const container = document.querySelector(`.${pos.container}`);
+                    coordinatesContainer.style.width = '100%';
+                    coordinatesContainer.style.position = 'relative';
+                    coordinatesContainer.style.top = 'auto';
+                    coordinatesContainer.style.left = 'auto';
+                    container.appendChild(coordinatesContainer);
+                    coordinatesContainer.classList.add('position-5');
+                    coordinatesContainer.style.height = '400%'; // Ensure height is set correctly for position 5
+                } else {
+                    coordinatesContainer.style.width = pos.width || '8vw'; // Use width from pos or default
+                    coordinatesContainer.style.height = pos.height || '150px'; // Use height from pos or default
+                    coordinatesContainer.style.position = 'absolute';
+                    coordinatesContainer.style.top = pos.top;
+                    coordinatesContainer.style.left = pos.left;
+                    if (position == 5) {
+                        coordinatesContainer.classList.add('position-6'); // Add class for position 6
+                    }
+                }
+            });
+        });
+
+        // Set default position to 5
+        const defaultPosition = 4;
+        previews[defaultPosition].classList.add('selected');
+        const defaultPos = positions[defaultPosition];
+        const defaultContainer = document.querySelector(`.${defaultPos.container}`);
+        coordinatesContainer.style.width = '100%';
+        coordinatesContainer.style.position = 'relative';
+        coordinatesContainer.style.top = '10px';
+        coordinatesContainer.style.left = 'auto';
+        defaultContainer.appendChild(coordinatesContainer);
+        coordinatesContainer.classList.add('position-5');
+
+        // Initial draw
+        fetchLatestPositions();
+        requestAnimationFrame(animationLoop);
+        createStars(); // Ensure stars are created
+        createGalaxy(); // Ensure galaxy is created
+
+        function createGalaxy() {
+            const galaxyContainer = document.querySelector('.galaxy-container');
+            const galaxy = document.createElement('div');
+            galaxy.classList.add('galaxy');
+            galaxyContainer.appendChild(galaxy);
+
+            // Add stars to the galaxy
+            const starCount = 900;
+            for (let i = 0; i < starCount; i++) {
+                const star = document.createElement('div');
+                star.classList.add('star');
+                star.style.top = `${Math.random() * 90}%`;
+                star.style.left = `${Math.random() * 90}%`;
+                galaxy.appendChild(star);
+            }
+        }
+
+        // Call createGalaxy to initialize the galaxy
+        createGalaxy();
+
+        // Clean up animation frame on page unload
+        window.addEventListener('beforeunload', () => {
+            cancelAnimationFrame(animationFrameId);
+        });
+
+        // Remove the setInterval call
+        // setInterval(fetchLatestPositions, 1000);
+
+        document.getElementById('toggleGalaxyButton').addEventListener('click', () => {
+            const galaxyContainer = document.querySelector('.galaxy-container');
+            const isVisible = galaxyContainer.style.display === 'block';
+            galaxyContainer.style.display = isVisible ? 'none' : 'block';
+            document.getElementById('toggleGalaxyButton').textContent = isVisible ? 'Afficher la galaxie' : 'Masquer la galaxie';
+        });
+
+        galaxyColorInput.oninput = function() {
+            const galaxy = document.querySelector('.galaxy');
+            galaxy.style.background = `radial-gradient(circle, ${galaxyColorInput.value} 0%, rgba(47, 11, 144, 0) 70%)`;
+        };
+
+        boxShadowColorInput.oninput = function() {
+            const boxShadowColor = boxShadowColorInput.value;
+            document.querySelectorAll(' .left-container, #controls, #coordinatesContainer, .footer-container, #settingsContent, #mathFormulasContent, #robotStatus').forEach(element => {
+                element.style.boxShadow = `0 0 2vw ${boxShadowColor}`;
+            });
+        };
+    </script>
+</body>
+<footer>
+    <div class="footer-container">
+        <div>Copyright © 2022 - 2025 Birds Audiovisuel. Tous droits réservés.</div>
+        <div>Réalisé par Samuel LEGRAND.</div>
+    </div>
+</footer>
+</html>
